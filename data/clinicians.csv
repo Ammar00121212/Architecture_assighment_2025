@@ -1,0 +1,8 @@
+ClinicianID,FirstName,LastName,Qualification,Specialty,Workplace,Email,Phone
+C001,Dr. James,Anderson,MBBS,General Practice,GP001,james.anderson@nhs.uk,07111111111
+C002,Dr. Mary,Johnson,MBBS MD,Cardiology,HOSP001,mary.johnson@nhs.uk,07222222222
+C003,Dr. Robert,Taylor,MBBS,General Practice,GP002,robert.taylor@nhs.uk,07333333333
+C004,Nurse Jane,Williams,RN,General Practice,GP001,jane.williams@nhs.uk,07444444444
+C005,Dr. Lisa,Martinez,MBBS PhD,Neurology,HOSP001,lisa.martinez@nhs.uk,07555555555
+
+

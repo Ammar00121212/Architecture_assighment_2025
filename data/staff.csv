@@ -1,0 +1,8 @@
+StaffID,FirstName,LastName,Role,FacilityID,Email,Phone
+S001,Alice,Thompson,Administrator,GP001,alice.thompson@nhs.uk,07100000001
+S002,Bob,Roberts,Receptionist,GP001,bob.roberts@nhs.uk,07100000002
+S003,Carol,White,Administrator,GP002,carol.white@nhs.uk,07100000003
+S004,Daniel,Harris,Receptionist,GP002,daniel.harris@nhs.uk,07100000004
+S005,Eve,Clark,Support Staff,HOSP001,eve.clark@nhs.uk,07100000005
+
+

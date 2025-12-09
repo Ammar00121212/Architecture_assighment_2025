@@ -1,0 +1,7 @@
+FacilityID,Name,Type,Address,Phone,Email,Services,Capacity
+GP001,Green Park Surgery,GP Surgery,"100 Green Park London",02012345678,gp001@nhs.uk,"General Practice,Pharmacy",5000
+GP002,City Health Centre,GP Surgery,"200 City Centre Manchester",01612345678,gp002@nhs.uk,"General Practice,Minor Surgery",4000
+GP003,Central Medical Practice,GP Surgery,"300 High Street Birmingham",01212345678,gp003@nhs.uk,"General Practice,Pharmacy",3500
+HOSP001,City General Hospital,Hospital,"500 Hospital Road London",02098765432,hosp001@nhs.uk,"Emergency,Cardiology,Neurology,Surgery",1000
+HOSP002,Regional Medical Centre,Hospital,"600 Medical Way Manchester",01698765432,hosp002@nhs.uk,"Emergency,Cardiology,Orthopedics",800
+

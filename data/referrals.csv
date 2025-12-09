@@ -1,0 +1,7 @@
+ReferralID,PatientID,ReferringClinicianID,ReceivingClinicianID,ReferringFacility,ReceivingFacility,Date,Urgency,ClinicalSummary,Status
+REF001,P001,C001,C002,GP001,HOSP001,2024-01-15,Urgent,"Patient presents with chest pain and abnormal ECG. Requires cardiac assessment.",Pending
+REF002,P002,C001,C005,GP001,HOSP001,2024-01-16,Standard,"Persistent headaches and neurological symptoms. Needs specialist evaluation.",Pending
+REF003,P003,C003,C002,GP002,HOSP002,2024-01-17,Standard,"Elevated cardiac markers. Referral for cardiology consultation.",Completed
+REF004,P004,C001,C005,GP001,HOSP001,2024-01-18,Urgent,"Seizure activity observed. Immediate neurological assessment required.",Pending
+
+
