@@ -21,7 +21,8 @@ public class ReferralPanel extends JPanel {
     }
 
     private void initializePanel() {
-        setLayout(new BorderLayout());
+        setLayout(new BorderLayout(10, 10));
+        setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         String[] columns = {"Referral ID", "Patient ID", "Referring Clinician", "Receiving Clinician",
                           "Referring Facility", "Receiving Facility", "Date", "Urgency", "Status", "Clinical Summary"};
         tableModel = new DefaultTableModel(columns, 0) {
@@ -31,12 +32,26 @@ public class ReferralPanel extends JPanel {
             }
         };
         table = new JTable(tableModel);
+        table.setFillsViewportHeight(true);
+        table.setRowHeight(24);
+        table.setShowGrid(true);
+        table.setGridColor(new Color(230, 230, 230));
+        table.setSelectionBackground(new Color(227, 242, 253));
+        table.setSelectionForeground(Color.BLACK);
         table.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) loadSelectedReferral();
         });
-        add(new JScrollPane(table), BorderLayout.CENTER);
-        add(createFormPanel(), BorderLayout.SOUTH);
-        add(createButtonPanel(), BorderLayout.NORTH);
+        JScrollPane scrollPane = new JScrollPane(table);
+        scrollPane.setBorder(BorderFactory.createTitledBorder("Referrals"));
+        add(scrollPane, BorderLayout.CENTER);
+
+        JPanel formPanel = createFormPanel();
+        formPanel.setBorder(BorderFactory.createTitledBorder("Referral Details"));
+        add(formPanel, BorderLayout.SOUTH);
+
+        JPanel buttonPanel = createButtonPanel();
+        buttonPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
+        add(buttonPanel, BorderLayout.NORTH);
     }
 
     private JPanel createFormPanel() {

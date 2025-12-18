@@ -20,7 +20,8 @@ public class StaffPanel extends JPanel {
     }
 
     private void initializePanel() {
-        setLayout(new BorderLayout());
+        setLayout(new BorderLayout(10, 10));
+        setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         String[] columns = {"Staff ID", "First Name", "Last Name", "Role", "Facility ID", "Email", "Phone"};
         tableModel = new DefaultTableModel(columns, 0) {
             @Override
@@ -29,12 +30,26 @@ public class StaffPanel extends JPanel {
             }
         };
         table = new JTable(tableModel);
+        table.setFillsViewportHeight(true);
+        table.setRowHeight(24);
+        table.setShowGrid(true);
+        table.setGridColor(new Color(230, 230, 230));
+        table.setSelectionBackground(new Color(227, 242, 253));
+        table.setSelectionForeground(Color.BLACK);
         table.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) loadSelectedStaff();
         });
-        add(new JScrollPane(table), BorderLayout.CENTER);
-        add(createFormPanel(), BorderLayout.SOUTH);
-        add(createButtonPanel(), BorderLayout.NORTH);
+        JScrollPane scrollPane = new JScrollPane(table);
+        scrollPane.setBorder(BorderFactory.createTitledBorder("Staff"));
+        add(scrollPane, BorderLayout.CENTER);
+
+        JPanel formPanel = createFormPanel();
+        formPanel.setBorder(BorderFactory.createTitledBorder("Staff Details"));
+        add(formPanel, BorderLayout.SOUTH);
+
+        JPanel buttonPanel = createButtonPanel();
+        buttonPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
+        add(buttonPanel, BorderLayout.NORTH);
     }
 
     private JPanel createFormPanel() {

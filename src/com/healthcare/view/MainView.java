@@ -31,11 +31,33 @@ public class MainView extends JFrame {
         setSize(1200, 800);
         setLocationRelativeTo(null);
 
+        // Use a modern, clean background
+        getContentPane().setBackground(new Color(245, 247, 250));
+
+        // Header bar
+        JPanel header = new JPanel(new BorderLayout());
+        header.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
+        header.setBackground(new Color(33, 150, 243));
+
+        JLabel titleLabel = new JLabel("Healthcare Management System");
+        titleLabel.setForeground(Color.WHITE);
+        titleLabel.setFont(titleLabel.getFont().deriveFont(Font.BOLD, 22f));
+        header.add(titleLabel, BorderLayout.WEST);
+
+        JLabel subtitleLabel = new JLabel("Patient, Clinician, Facility, Appointment & Referral Management");
+        subtitleLabel.setForeground(new Color(225, 240, 255));
+        subtitleLabel.setFont(subtitleLabel.getFont().deriveFont(Font.PLAIN, 13f));
+        header.add(subtitleLabel, BorderLayout.SOUTH);
+
+        add(header, BorderLayout.NORTH);
+
         // Create menu bar
         createMenuBar();
 
         // Create tabbed pane
         tabbedPane = new JTabbedPane();
+        tabbedPane.setFont(tabbedPane.getFont().deriveFont(Font.PLAIN, 14f));
+        tabbedPane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         // Create panels for each entity
         patientPanel = new PatientPanel(controller);
@@ -59,7 +81,11 @@ public class MainView extends JFrame {
 
         // Status bar
         JPanel statusBar = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        statusBar.add(new JLabel("Ready"));
+        statusBar.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        statusBar.setBackground(new Color(250, 250, 250));
+        JLabel statusLabel = new JLabel("Ready");
+        statusLabel.setForeground(new Color(100, 100, 100));
+        statusBar.add(statusLabel);
         add(statusBar, BorderLayout.SOUTH);
     }
 

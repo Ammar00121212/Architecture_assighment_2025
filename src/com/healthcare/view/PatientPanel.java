@@ -23,7 +23,8 @@ public class PatientPanel extends JPanel {
     }
 
     private void initializePanel() {
-        setLayout(new BorderLayout());
+        setLayout(new BorderLayout(10, 10));
+        setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         // Table
         String[] columns = {"Patient ID", "First Name", "Last Name", "DOB", "Gender", 
@@ -35,6 +36,12 @@ public class PatientPanel extends JPanel {
             }
         };
         table = new JTable(tableModel);
+        table.setFillsViewportHeight(true);
+        table.setRowHeight(24);
+        table.setShowGrid(true);
+        table.setGridColor(new Color(230, 230, 230));
+        table.setSelectionBackground(new Color(227, 242, 253));
+        table.setSelectionForeground(Color.BLACK);
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
@@ -43,14 +50,17 @@ public class PatientPanel extends JPanel {
         });
 
         JScrollPane scrollPane = new JScrollPane(table);
+        scrollPane.setBorder(BorderFactory.createTitledBorder("Patients"));
         add(scrollPane, BorderLayout.CENTER);
 
         // Form panel
         JPanel formPanel = createFormPanel();
+        formPanel.setBorder(BorderFactory.createTitledBorder("Patient Details"));
         add(formPanel, BorderLayout.SOUTH);
 
         // Buttons panel
         JPanel buttonPanel = createButtonPanel();
+        buttonPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
         add(buttonPanel, BorderLayout.NORTH);
     }
 
