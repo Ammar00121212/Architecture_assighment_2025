@@ -4,12 +4,11 @@ import com.healthcare.controller.HealthcareController;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * Main View class - Main GUI window with tabs for different entities
- */
 public class MainView extends JFrame {
+
     private HealthcareController controller;
     private JTabbedPane tabbedPane;
+
     private PatientPanel patientPanel;
     private ClinicianPanel clinicianPanel;
     private FacilityPanel facilityPanel;
@@ -21,20 +20,20 @@ public class MainView extends JFrame {
     public MainView(HealthcareController controller) {
         this.controller = controller;
         initializeGUI();
-        // After UI and data are ready, populate all tables once on startup
         refreshAllPanels();
     }
 
     private void initializeGUI() {
         setTitle("Healthcare Management System");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(1200, 800);
+
+        // 🔥 FULL SCREEN FIX
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
+
         setLocationRelativeTo(null);
+        setLayout(new BorderLayout());
 
-        // Use a modern, clean background
-        getContentPane().setBackground(new Color(245, 247, 250));
-
-        // Header bar
+        // ================= HEADER =================
         JPanel header = new JPanel(new BorderLayout());
         header.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
         header.setBackground(new Color(33, 150, 243));
@@ -51,15 +50,10 @@ public class MainView extends JFrame {
 
         add(header, BorderLayout.NORTH);
 
-        // Create menu bar
-        createMenuBar();
-
-        // Create tabbed pane
+        // ================= TABS =================
         tabbedPane = new JTabbedPane();
-        tabbedPane.setFont(tabbedPane.getFont().deriveFont(Font.PLAIN, 14f));
-        tabbedPane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        tabbedPane.setFont(tabbedPane.getFont().deriveFont(Font.BOLD, 13f));
 
-        // Create panels for each entity
         patientPanel = new PatientPanel(controller);
         clinicianPanel = new ClinicianPanel(controller);
         facilityPanel = new FacilityPanel(controller);
@@ -68,7 +62,6 @@ public class MainView extends JFrame {
         referralPanel = new ReferralPanel(controller);
         staffPanel = new StaffPanel(controller);
 
-        // Add panels to tabs
         tabbedPane.addTab("Patients", patientPanel);
         tabbedPane.addTab("Clinicians", clinicianPanel);
         tabbedPane.addTab("Facilities", facilityPanel);
@@ -77,43 +70,49 @@ public class MainView extends JFrame {
         tabbedPane.addTab("Referrals", referralPanel);
         tabbedPane.addTab("Staff", staffPanel);
 
-        add(tabbedPane, BorderLayout.CENTER);
+        // 🔥 IMPORTANT: wrapper panel so tabs take FULL HEIGHT
+        JPanel centerWrapper = new JPanel(new BorderLayout());
+        centerWrapper.add(tabbedPane, BorderLayout.CENTER);
+        add(centerWrapper, BorderLayout.CENTER);
 
-        // Status bar
+        // ================= STATUS BAR =================
         JPanel statusBar = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        statusBar.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
-        statusBar.setBackground(new Color(250, 250, 250));
-        JLabel statusLabel = new JLabel("Ready");
-        statusLabel.setForeground(new Color(100, 100, 100));
+        statusBar.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, new Color(230, 230, 230)));
+        statusBar.setBackground(Color.WHITE);
+
+        JLabel statusLabel = new JLabel("✓ Ready");
+        statusLabel.setForeground(new Color(76, 175, 80));
         statusBar.add(statusLabel);
+
         add(statusBar, BorderLayout.SOUTH);
+
+        createMenuBar();
     }
 
     private void createMenuBar() {
         JMenuBar menuBar = new JMenuBar();
 
-        // File menu
         JMenu fileMenu = new JMenu("File");
         JMenuItem loadMenuItem = new JMenuItem("Load Data");
         loadMenuItem.addActionListener(e -> loadData());
-        fileMenu.add(loadMenuItem);
-        fileMenu.addSeparator();
+
         JMenuItem exitMenuItem = new JMenuItem("Exit");
         exitMenuItem.addActionListener(e -> System.exit(0));
+
+        fileMenu.add(loadMenuItem);
+        fileMenu.addSeparator();
         fileMenu.add(exitMenuItem);
 
         menuBar.add(fileMenu);
         setJMenuBar(menuBar);
     }
 
-    //load data for csv files
     private void loadData() {
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        int result = fileChooser.showOpenDialog(this);
-        if (result == JFileChooser.APPROVE_OPTION) {
-            String dataDirectory = fileChooser.getSelectedFile().getAbsolutePath();
-            controller.loadData(dataDirectory);
+        JFileChooser chooser = new JFileChooser();
+        chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+
+        if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+            controller.loadData(chooser.getSelectedFile().getAbsolutePath());
             refreshAllPanels();
             JOptionPane.showMessageDialog(this, "Data loaded successfully!");
         }
@@ -129,4 +128,3 @@ public class MainView extends JFrame {
         staffPanel.refreshData();
     }
 }
-

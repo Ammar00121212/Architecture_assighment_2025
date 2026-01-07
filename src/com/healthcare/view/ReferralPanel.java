@@ -2,152 +2,169 @@ package com.healthcare.view;
 
 import com.healthcare.controller.HealthcareController;
 import com.healthcare.model.Referral;
+
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
 import java.awt.*;
 import java.util.List;
 
 public class ReferralPanel extends JPanel {
+
     private HealthcareController controller;
     private JTable table;
     private DefaultTableModel tableModel;
+
     private JTextField referralIDField, patientIDField, referringClinicianIDField, receivingClinicianIDField;
-    private JTextField referringFacilityField, receivingFacilityField, dateField;
-    private JTextField urgencyField, referralReasonField, clinicalSummaryField, investigationsField;
+    private JTextField referringFacilityField, receivingFacilityField, dateField, urgencyField;
+    private JTextField referralReasonField, clinicalSummaryField, investigationsField;
     private JTextField appointmentIDField, notesField, statusField, createdDateField, lastUpdatedField;
+
+    private JButton addButton, updateButton, deleteButton, generateFileButton;
 
     public ReferralPanel(HealthcareController controller) {
         this.controller = controller;
         initializePanel();
+        refreshData();
     }
 
     private void initializePanel() {
         setLayout(new BorderLayout(10, 10));
-        setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        setBorder(new EmptyBorder(10, 10, 10, 10));
+        setBackground(new Color(245, 247, 250));
+
+        // ===== Table =====
         String[] columns = {"Referral ID", "Patient ID", "Referring Clinician", "Receiving Clinician",
-                          "Referring Facility", "Receiving Facility", "Date", "Urgency", "Referral Reason",
-                          "Clinical Summary", "Investigations", "Appointment ID", "Notes", "Status", "Created", "Last Updated"};
+                "Referring Facility", "Receiving Facility", "Date", "Urgency", "Referral Reason",
+                "Clinical Summary", "Investigations", "Appointment ID", "Notes", "Status", "Created", "Last Updated"};
+
         tableModel = new DefaultTableModel(columns, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
+            public boolean isCellEditable(int r, int c) { return false; }
         };
         table = new JTable(tableModel);
-        table.setFillsViewportHeight(true);
-        table.setRowHeight(24);
-        table.setShowGrid(true);
-        table.setGridColor(new Color(230, 230, 230));
+        table.setRowHeight(35);
         table.setSelectionBackground(new Color(227, 242, 253));
-        table.setSelectionForeground(Color.BLACK);
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+
+        JTableHeader headerTable = table.getTableHeader();
+        headerTable.setBackground(new Color(236, 239, 241));
+        headerTable.setFont(new Font("Segoe UI", Font.BOLD, 13));
+
+        int[] widths = {100, 100, 130, 130, 150, 150, 100, 80, 150, 200, 150, 120, 200, 100, 120, 120};
+        for (int i = 0; i < widths.length; i++)
+            table.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
+
+        JScrollPane tableScroll = new JScrollPane(table);
+
+        // ===== Form =====
+        JPanel formPanel = new JPanel(new GridLayout(5, 4, 8, 8));
+        formPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+
+        referralIDField = field(); patientIDField = field(); referringClinicianIDField = field();
+        receivingClinicianIDField = field(); referringFacilityField = field(); receivingFacilityField = field();
+        dateField = field(); urgencyField = field(); referralReasonField = field(); clinicalSummaryField = field();
+        investigationsField = field(); appointmentIDField = field(); notesField = field(); statusField = field();
+        createdDateField = field(); lastUpdatedField = field();
+
+        addToForm(formPanel, "Referral ID", referralIDField);
+        addToForm(formPanel, "Patient ID", patientIDField);
+        addToForm(formPanel, "Referring Clinician ID", referringClinicianIDField);
+        addToForm(formPanel, "Receiving Clinician ID", receivingClinicianIDField);
+        addToForm(formPanel, "Referring Facility", referringFacilityField);
+        addToForm(formPanel, "Receiving Facility", receivingFacilityField);
+        addToForm(formPanel, "Date", dateField);
+        addToForm(formPanel, "Urgency", urgencyField);
+        addToForm(formPanel, "Status", statusField);
+        addToForm(formPanel, "Appointment ID", appointmentIDField);
+        addToForm(formPanel, "Created Date", createdDateField);
+        addToForm(formPanel, "Last Updated", lastUpdatedField);
+        addToForm(formPanel, "Referral Reason", referralReasonField);
+        addToForm(formPanel, "Clinical Summary", clinicalSummaryField);
+        addToForm(formPanel, "Investigations", investigationsField);
+        addToForm(formPanel, "Notes", notesField);
+
+        // ===== Buttons =====
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        addButton = new JButton("Add");
+        updateButton = new JButton("Update");
+        deleteButton = new JButton("Delete");
+        generateFileButton = new JButton("Generate File");
+
+        addButton.addActionListener(e -> addReferral());
+        updateButton.addActionListener(e -> updateReferral());
+        deleteButton.addActionListener(e -> deleteReferral());
+        generateFileButton.addActionListener(e -> generateReferralFile());
+
+        buttonPanel.add(addButton);
+        buttonPanel.add(updateButton);
+        buttonPanel.add(deleteButton);
+        buttonPanel.add(generateFileButton);
+
+        JPanel formContainer = new JPanel(new BorderLayout());
+        formContainer.add(formPanel, BorderLayout.CENTER);
+        formContainer.add(buttonPanel, BorderLayout.SOUTH);
+
+        // ===== Split Pane =====
+        JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, tableScroll, formContainer);
+        splitPane.setResizeWeight(0.5); // Table takes half screen
+        splitPane.setDividerSize(5);
+        splitPane.setOneTouchExpandable(true);
+
+        add(splitPane, BorderLayout.CENTER);
+
+        // ===== Table Selection =====
         table.getSelectionModel().addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) loadSelectedReferral();
+            if (!e.getValueIsAdjusting() && table.getSelectedRow() >= 0)
+                loadSelectedReferral();
         });
-        JScrollPane scrollPane = new JScrollPane(table);
-        scrollPane.setBorder(BorderFactory.createTitledBorder("Referrals"));
-        add(scrollPane, BorderLayout.CENTER);
-
-        JPanel formPanel = createFormPanel();
-        formPanel.setBorder(BorderFactory.createTitledBorder("Referral Details"));
-        add(formPanel, BorderLayout.SOUTH);
-
-        JPanel buttonPanel = createButtonPanel();
-        buttonPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
-        add(buttonPanel, BorderLayout.NORTH);
     }
 
-    private JPanel createFormPanel() {
-        JPanel panel = new JPanel(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 5, 5, 5);
-        gbc.anchor = GridBagConstraints.WEST;
-
-        int row = 0;
-        addField(panel, gbc, row++, "Referral ID:", referralIDField = new JTextField(15));
-        addField(panel, gbc, row++, "Patient ID:", patientIDField = new JTextField(15));
-        addField(panel, gbc, row++, "Referring Clinician ID:", referringClinicianIDField = new JTextField(15));
-        addField(panel, gbc, row++, "Receiving Clinician ID:", receivingClinicianIDField = new JTextField(15));
-        addField(panel, gbc, row++, "Referring Facility:", referringFacilityField = new JTextField(15));
-        addField(panel, gbc, row++, "Receiving Facility:", receivingFacilityField = new JTextField(15));
-        addField(panel, gbc, row++, "Date:", dateField = new JTextField(15));
-        addField(panel, gbc, row++, "Urgency:", urgencyField = new JTextField(15));
-        addField(panel, gbc, row++, "Referral Reason:", referralReasonField = new JTextField(30));
-        addField(panel, gbc, row++, "Clinical Summary:", clinicalSummaryField = new JTextField(30));
-        addField(panel, gbc, row++, "Investigations:", investigationsField = new JTextField(30));
-        addField(panel, gbc, row++, "Appointment ID:", appointmentIDField = new JTextField(15));
-        addField(panel, gbc, row++, "Notes:", notesField = new JTextField(30));
-        addField(panel, gbc, row++, "Status:", statusField = new JTextField(15));
-        addField(panel, gbc, row++, "Created Date:", createdDateField = new JTextField(15));
-        addField(panel, gbc, row++, "Last Updated:", lastUpdatedField = new JTextField(15));
-
-        return panel;
+    private JTextField field() {
+        JTextField f = new JTextField();
+        f.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        return f;
     }
 
-    private void addField(JPanel panel, GridBagConstraints gbc, int row, String label, JTextField field) {
-        gbc.gridx = 0;
-        gbc.gridy = row;
-        panel.add(new JLabel(label), gbc);
-        gbc.gridx = 1;
-        panel.add(field, gbc);
+    private void addToForm(JPanel p, String label, JTextField field) {
+        p.add(new JLabel(label));
+        p.add(field);
     }
 
-    private JPanel createButtonPanel() {
-        JPanel panel = new JPanel(new FlowLayout());
-        addButton(panel, "Add", e -> addReferral());
-        addButton(panel, "Update", e -> updateReferral());
-        addButton(panel, "Delete", e -> deleteReferral());
-        addButton(panel, "Generate File", e -> generateReferralFile());
-        addButton(panel, "Clear", e -> clearForm());
-        addButton(panel, "Refresh", e -> refreshData());
-        return panel;
-    }
-
-    private void addButton(JPanel panel, String text, java.awt.event.ActionListener listener) {
-        JButton button = new JButton(text);
-        button.addActionListener(listener);
-        panel.add(button);
+    // ================== CRUD ==================
+    private Referral createReferralFromForm() {
+        if (referralIDField.getText().trim().isEmpty()) return null;
+        return new Referral(referralIDField.getText().trim(), patientIDField.getText().trim(),
+                referringClinicianIDField.getText().trim(), receivingClinicianIDField.getText().trim(),
+                referringFacilityField.getText().trim(), receivingFacilityField.getText().trim(),
+                dateField.getText().trim(), urgencyField.getText().trim(), referralReasonField.getText().trim(),
+                clinicalSummaryField.getText().trim(), investigationsField.getText().trim(),
+                appointmentIDField.getText().trim(), notesField.getText().trim(), statusField.getText().trim(),
+                createdDateField.getText().trim(), lastUpdatedField.getText().trim());
     }
 
     private void addReferral() {
-        try {
-            Referral referral = createReferralFromForm();
-            if (referral != null) {
-                controller.addReferral(referral);
-                refreshData();
-                clearForm();
-                JOptionPane.showMessageDialog(this, "Referral added!");
-            }
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        Referral r = createReferralFromForm();
+        if (r != null) {
+            controller.addReferral(r);
+            refreshData();
+            clearForm();
         }
     }
 
     private void updateReferral() {
         int row = table.getSelectedRow();
-        if (row < 0) {
-            JOptionPane.showMessageDialog(this, "Please select a referral.");
-            return;
-        }
-        try {
-            String id = (String) tableModel.getValueAt(row, 0);
-            controller.deleteReferral(id);
+        if (row >= 0) {
+            controller.deleteReferral((String) tableModel.getValueAt(row, 0));
             controller.addReferral(createReferralFromForm());
             refreshData();
             clearForm();
-            JOptionPane.showMessageDialog(this, "Referral updated!");
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
     private void deleteReferral() {
         int row = table.getSelectedRow();
-        if (row < 0) {
-            JOptionPane.showMessageDialog(this, "Please select a referral.");
-            return;
-        }
-        if (JOptionPane.showConfirmDialog(this, "Delete this referral?", "Confirm", 
-            JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+        if (row >= 0) {
             controller.deleteReferral((String) tableModel.getValueAt(row, 0));
             refreshData();
             clearForm();
@@ -156,96 +173,53 @@ public class ReferralPanel extends JPanel {
 
     private void generateReferralFile() {
         int row = table.getSelectedRow();
-        if (row < 0) {
-            JOptionPane.showMessageDialog(this, "Please select a referral to generate file.");
-            return;
-        }
-
-        String referralID = (String) tableModel.getValueAt(row, 0);
-        Referral referral = controller.getAllReferrals().stream()
-            .filter(r -> r.getReferralID().equals(referralID))
-            .findFirst()
-            .orElse(null);
-
-        if (referral != null) {
-            JFileChooser fileChooser = new JFileChooser();
-            fileChooser.setDialogTitle("Save Referral File");
-            fileChooser.setSelectedFile(new java.io.File("referral_" + referralID + ".txt"));
-            int result = fileChooser.showSaveDialog(this);
-            if (result == JFileChooser.APPROVE_OPTION) {
-                String filePath = fileChooser.getSelectedFile().getAbsolutePath();
-                controller.generateReferralFile(referral, filePath);
-                JOptionPane.showMessageDialog(this, "Referral file generated successfully!");
-            }
-        }
-    }
-
-    private Referral createReferralFromForm() {
-        if (referralIDField.getText().trim().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Referral ID required.");
-            return null;
-        }
-        return new Referral(referralIDField.getText().trim(), patientIDField.getText().trim(),
-            referringClinicianIDField.getText().trim(), receivingClinicianIDField.getText().trim(),
-            referringFacilityField.getText().trim(), receivingFacilityField.getText().trim(),
-            dateField.getText().trim(), urgencyField.getText().trim(), referralReasonField.getText().trim(),
-            clinicalSummaryField.getText().trim(), investigationsField.getText().trim(),
-            appointmentIDField.getText().trim(), notesField.getText().trim(), statusField.getText().trim(),
-            createdDateField.getText().trim(), lastUpdatedField.getText().trim());
+        if (row < 0) return;
+        String id = (String) tableModel.getValueAt(row, 0);
+        Referral r = controller.getAllReferrals().stream().filter(ref -> ref.getReferralID().equals(id)).findFirst().orElse(null);
+        if (r != null) controller.generateReferralFile(r, "referral_" + id + ".txt");
     }
 
     private void loadSelectedReferral() {
-        int row = table.getSelectedRow();
-        if (row >= 0) {
-            referralIDField.setText((String) tableModel.getValueAt(row, 0));
-            patientIDField.setText((String) tableModel.getValueAt(row, 1));
-            referringClinicianIDField.setText((String) tableModel.getValueAt(row, 2));
-            receivingClinicianIDField.setText((String) tableModel.getValueAt(row, 3));
-            referringFacilityField.setText((String) tableModel.getValueAt(row, 4));
-            receivingFacilityField.setText((String) tableModel.getValueAt(row, 5));
-            dateField.setText((String) tableModel.getValueAt(row, 6));
-            urgencyField.setText((String) tableModel.getValueAt(row, 7));
-            referralReasonField.setText((String) tableModel.getValueAt(row, 8));
-            clinicalSummaryField.setText((String) tableModel.getValueAt(row, 9));
-            investigationsField.setText((String) tableModel.getValueAt(row, 10));
-            appointmentIDField.setText((String) tableModel.getValueAt(row, 11));
-            notesField.setText((String) tableModel.getValueAt(row, 12));
-            statusField.setText((String) tableModel.getValueAt(row, 13));
-            createdDateField.setText((String) tableModel.getValueAt(row, 14));
-            lastUpdatedField.setText((String) tableModel.getValueAt(row, 15));
+        int r = table.getSelectedRow();
+        if (r >= 0) {
+            referralIDField.setText((String) tableModel.getValueAt(r, 0));
+            patientIDField.setText((String) tableModel.getValueAt(r, 1));
+            referringClinicianIDField.setText((String) tableModel.getValueAt(r, 2));
+            receivingClinicianIDField.setText((String) tableModel.getValueAt(r, 3));
+            referringFacilityField.setText((String) tableModel.getValueAt(r, 4));
+            receivingFacilityField.setText((String) tableModel.getValueAt(r, 5));
+            dateField.setText((String) tableModel.getValueAt(r, 6));
+            urgencyField.setText((String) tableModel.getValueAt(r, 7));
+            referralReasonField.setText((String) tableModel.getValueAt(r, 8));
+            clinicalSummaryField.setText((String) tableModel.getValueAt(r, 9));
+            investigationsField.setText((String) tableModel.getValueAt(r, 10));
+            appointmentIDField.setText((String) tableModel.getValueAt(r, 11));
+            notesField.setText((String) tableModel.getValueAt(r, 12));
+            statusField.setText((String) tableModel.getValueAt(r, 13));
+            createdDateField.setText((String) tableModel.getValueAt(r, 14));
+            lastUpdatedField.setText((String) tableModel.getValueAt(r, 15));
         }
     }
 
     private void clearForm() {
-        referralIDField.setText("");
-        patientIDField.setText("");
-        referringClinicianIDField.setText("");
-        receivingClinicianIDField.setText("");
-        referringFacilityField.setText("");
-        receivingFacilityField.setText("");
-        dateField.setText("");
-        urgencyField.setText("");
-        referralReasonField.setText("");
-        clinicalSummaryField.setText("");
-        investigationsField.setText("");
-        appointmentIDField.setText("");
-        notesField.setText("");
-        statusField.setText("");
-        createdDateField.setText("");
-        lastUpdatedField.setText("");
+        referralIDField.setText(""); patientIDField.setText(""); referringClinicianIDField.setText("");
+        receivingClinicianIDField.setText(""); referringFacilityField.setText(""); receivingFacilityField.setText("");
+        dateField.setText(""); urgencyField.setText(""); referralReasonField.setText("");
+        clinicalSummaryField.setText(""); investigationsField.setText(""); appointmentIDField.setText("");
+        notesField.setText(""); statusField.setText(""); createdDateField.setText(""); lastUpdatedField.setText("");
+        table.clearSelection();
     }
 
     public void refreshData() {
         tableModel.setRowCount(0);
-        for (Referral r : controller.getAllReferrals()) {
-            tableModel.addRow(new Object[]{r.getReferralID(), r.getPatientID(), r.getReferringClinicianID(),
-                r.getReceivingClinicianID(), r.getReferringFacility(), r.getReceivingFacility(),
-                r.getDate(), r.getUrgency(), r.getReferralReason(), r.getClinicalSummary(),
-                r.getRequestedInvestigations(), r.getAppointmentID(), r.getNotes(), r.getStatus(),
-                r.getCreatedDate(), r.getLastUpdated()});
+        List<Referral> list = controller.getAllReferrals();
+        for (Referral r : list) {
+            tableModel.addRow(new Object[]{
+                    r.getReferralID(), r.getPatientID(), r.getReferringClinicianID(), r.getReceivingClinicianID(),
+                    r.getReferringFacility(), r.getReceivingFacility(), r.getDate(), r.getUrgency(),
+                    r.getReferralReason(), r.getClinicalSummary(), r.getRequestedInvestigations(),
+                    r.getAppointmentID(), r.getNotes(), r.getStatus(), r.getCreatedDate(), r.getLastUpdated()
+            });
         }
     }
 }
-
-
-

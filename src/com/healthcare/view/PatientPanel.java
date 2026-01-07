@@ -2,385 +2,241 @@ package com.healthcare.view;
 
 import com.healthcare.controller.HealthcareController;
 import com.healthcare.model.Patient;
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.JTableHeader;
 import java.awt.*;
 import java.util.List;
 
-/**
- * Panel for Patient management (CRUD operations)
- */
 public class PatientPanel extends JPanel {
+
     private HealthcareController controller;
+
     private JTable table;
     private DefaultTableModel tableModel;
+
     private JTextField patientIDField, firstNameField, lastNameField, dobField, genderField;
     private JTextField nhsNumberField, emailField, phoneField, addressField, postcodeField;
-    private JTextField emergencyContactNameField, emergencyContactPhoneField, registrationDateField, gpSurgeryField;
+    private JTextField emergencyContactNameField, emergencyContactPhoneField;
+    private JTextField registrationDateField, gpSurgeryField;
 
     public PatientPanel(HealthcareController controller) {
         this.controller = controller;
-        initializePanel();
+        initUI();
     }
 
-    private void initializePanel() {
+    private void initUI() {
         setLayout(new BorderLayout(10, 10));
         setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
-        // Soft background for a cleaner "admin panel" appearance
         setBackground(new Color(245, 247, 250));
 
-        // Table
-        String[] columns = {"Patient ID", "First Name", "Last Name", "DOB", "Gender", 
-                          "NHS Number", "Email", "Phone", "Address", "Postcode", 
-                          "Emergency Contact", "Emergency Phone", "Registration Date", "GP Surgery"};
-        tableModel = new DefaultTableModel(columns, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
+        // ---------- BUTTON BAR ----------
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        buttonPanel.setBackground(new Color(245, 247, 250));
+
+        JButton addBtn = new JButton("Add");
+        JButton updateBtn = new JButton("Update");
+        JButton deleteBtn = new JButton("Delete");
+        JButton clearBtn = new JButton("Clear");
+        JButton refreshBtn = new JButton("Refresh");
+
+        addBtn.addActionListener(e -> addPatient());
+        updateBtn.addActionListener(e -> updatePatient());
+        deleteBtn.addActionListener(e -> deletePatient());
+        clearBtn.addActionListener(e -> clearForm());
+        refreshBtn.addActionListener(e -> refreshData());
+
+        buttonPanel.add(addBtn);
+        buttonPanel.add(updateBtn);
+        buttonPanel.add(deleteBtn);
+        buttonPanel.add(clearBtn);
+        buttonPanel.add(refreshBtn);
+
+        add(buttonPanel, BorderLayout.NORTH);
+
+        // ---------- TABLE ----------
+        String[] cols = {
+                "Patient ID", "First Name", "Last Name", "DOB", "Gender",
+                "NHS No", "Email", "Phone", "Address", "Postcode",
+                "Emergency Name", "Emergency Phone", "Reg Date", "GP Surgery"
+        };
+
+        tableModel = new DefaultTableModel(cols, 0) {
+            public boolean isCellEditable(int r, int c) {
                 return false;
             }
         };
+
         table = new JTable(tableModel);
-        table.setFillsViewportHeight(true);
-        table.setRowHeight(24);
-        table.setShowGrid(true);
-        table.setGridColor(new Color(230, 230, 230));
-        table.setSelectionBackground(new Color(227, 242, 253));
-        table.setSelectionForeground(Color.BLACK);
+        table.setRowHeight(28);
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        setColumnWidths();
+
         table.getSelectionModel().addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) {
-                loadSelectedPatient();
-            }
+            if (!e.getValueIsAdjusting()) loadSelectedPatient();
         });
 
-        // Style table header for a dashboard-like look
-        JTableHeader header = table.getTableHeader();
-        header.setReorderingAllowed(false);
-        header.setBackground(new Color(236, 239, 241));
-        header.setForeground(new Color(55, 71, 79));
-        header.setFont(header.getFont().deriveFont(Font.BOLD, 13f));
+        JScrollPane tableScroll = new JScrollPane(table);
+        tableScroll.setBorder(BorderFactory.createTitledBorder("Patients"));
 
-        JScrollPane scrollPane = new JScrollPane(table);
-        scrollPane.getViewport().setBackground(Color.WHITE);
-        scrollPane.setBorder(BorderFactory.createTitledBorder("Patients"));
-        add(scrollPane, BorderLayout.CENTER);
-
-        // Form panel
+        // ---------- FORM ----------
         JPanel formPanel = createFormPanel();
         formPanel.setBorder(BorderFactory.createTitledBorder("Patient Details"));
-        formPanel.setBackground(new Color(250, 250, 250));
-        add(formPanel, BorderLayout.SOUTH);
 
-        // Buttons panel
-        JPanel buttonPanel = createButtonPanel();
-        buttonPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
-        buttonPanel.setBackground(new Color(245, 247, 250));
-        add(buttonPanel, BorderLayout.NORTH);
+        // ---------- SPLIT PANE (MAIN FIX) ----------
+        JSplitPane splitPane = new JSplitPane(
+                JSplitPane.VERTICAL_SPLIT,
+                tableScroll,
+                formPanel
+        );
+        splitPane.setResizeWeight(0.65); // table 65%, form 35%
+        splitPane.setDividerSize(6);
+
+        add(splitPane, BorderLayout.CENTER);
     }
 
+    // ---------- FORM PANEL ----------
     private JPanel createFormPanel() {
-        JPanel panel = new JPanel(new GridBagLayout());
-        panel.setOpaque(true);
-        panel.setBackground(new Color(250, 250, 250));
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 5, 5, 5);
-        gbc.anchor = GridBagConstraints.WEST;
+        JPanel p = new JPanel(new GridBagLayout());
+        p.setBackground(Color.WHITE);
 
-        int row = 0;
-        panel.add(new JLabel("Patient ID:"), gbc);
-        gbc.gridx = 1;
-        patientIDField = new JTextField(15);
-        panel.add(patientIDField, gbc);
+        GridBagConstraints g = new GridBagConstraints();
+        g.insets = new Insets(5, 5, 5, 5);
+        g.fill = GridBagConstraints.HORIZONTAL;
 
-        gbc.gridx = 2;
-        panel.add(new JLabel("First Name:"), gbc);
-        gbc.gridx = 3;
-        firstNameField = new JTextField(15);
-        panel.add(firstNameField, gbc);
+        int r = 0;
 
-        gbc.gridx = 4;
-        panel.add(new JLabel("Last Name:"), gbc);
-        gbc.gridx = 5;
-        lastNameField = new JTextField(15);
-        panel.add(lastNameField, gbc);
+        // Column 1
+        addField(p, g, 0, r++, "Patient ID", patientIDField = field());
+        addField(p, g, 0, r++, "First Name", firstNameField = field());
+        addField(p, g, 0, r++, "Last Name", lastNameField = field());
+        addField(p, g, 0, r++, "DOB", dobField = field());
+        addField(p, g, 0, r++, "Gender", genderField = field());
+        addField(p, g, 0, r++, "NHS No", nhsNumberField = field());
 
-        row++;
-        gbc.gridx = 0;
-        gbc.gridy = row;
-        panel.add(new JLabel("Date of Birth:"), gbc);
-        gbc.gridx = 1;
-        dobField = new JTextField(15);
-        panel.add(dobField, gbc);
+        // Column 2
+        r = 0;
+        addField(p, g, 2, r++, "Email", emailField = field());
+        addField(p, g, 2, r++, "Phone", phoneField = field());
+        addField(p, g, 2, r++, "Address", addressField = field());
+        addField(p, g, 2, r++, "Postcode", postcodeField = field());
+        addField(p, g, 2, r++, "Emergency Name", emergencyContactNameField = field());
+        addField(p, g, 2, r++, "Emergency Phone", emergencyContactPhoneField = field());
 
-        gbc.gridx = 2;
-        panel.add(new JLabel("Gender:"), gbc);
-        gbc.gridx = 3;
-        genderField = new JTextField(15);
-        panel.add(genderField, gbc);
+        // Column 3
+        r = 0;
+        addField(p, g, 4, r++, "Reg Date", registrationDateField = field());
+        addField(p, g, 4, r++, "GP Surgery", gpSurgeryField = field());
 
-        gbc.gridx = 4;
-        panel.add(new JLabel("NHS Number:"), gbc);
-        gbc.gridx = 5;
-        nhsNumberField = new JTextField(15);
-        panel.add(nhsNumberField, gbc);
-
-        row++;
-        gbc.gridx = 0;
-        gbc.gridy = row;
-        panel.add(new JLabel("Email:"), gbc);
-        gbc.gridx = 1;
-        emailField = new JTextField(15);
-        panel.add(emailField, gbc);
-
-        gbc.gridx = 2;
-        panel.add(new JLabel("Phone:"), gbc);
-        gbc.gridx = 3;
-        phoneField = new JTextField(15);
-        panel.add(phoneField, gbc);
-
-        gbc.gridx = 4;
-        panel.add(new JLabel("Address:"), gbc);
-        gbc.gridx = 5;
-        addressField = new JTextField(15);
-        panel.add(addressField, gbc);
-
-        row++;
-        gbc.gridx = 0;
-        gbc.gridy = row;
-        panel.add(new JLabel("Postcode:"), gbc);
-        gbc.gridx = 1;
-        postcodeField = new JTextField(15);
-        panel.add(postcodeField, gbc);
-
-        gbc.gridx = 2;
-        panel.add(new JLabel("Emergency Contact:"), gbc);
-        gbc.gridx = 3;
-        emergencyContactNameField = new JTextField(15);
-        panel.add(emergencyContactNameField, gbc);
-
-        gbc.gridx = 4;
-        panel.add(new JLabel("Emergency Phone:"), gbc);
-        gbc.gridx = 5;
-        emergencyContactPhoneField = new JTextField(15);
-        panel.add(emergencyContactPhoneField, gbc);
-
-        row++;
-        gbc.gridx = 0;
-        gbc.gridy = row;
-        panel.add(new JLabel("Registration Date:"), gbc);
-        gbc.gridx = 1;
-        registrationDateField = new JTextField(15);
-        panel.add(registrationDateField, gbc);
-
-        gbc.gridx = 2;
-        panel.add(new JLabel("GP Surgery:"), gbc);
-        gbc.gridx = 3;
-        gpSurgeryField = new JTextField(15);
-        panel.add(gpSurgeryField, gbc);
-
-        return panel;
+        return p;
     }
 
-    private JPanel createButtonPanel() {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
-
-        JButton addButton = createPrimaryButton("Add");
-        addButton.addActionListener(e -> addPatient());
-        panel.add(addButton);
-
-        JButton updateButton = createPrimaryButton("Update");
-        updateButton.addActionListener(e -> updatePatient());
-        panel.add(updateButton);
-
-        JButton deleteButton = createDangerButton("Delete");
-        deleteButton.addActionListener(e -> deletePatient());
-        panel.add(deleteButton);
-
-        JButton clearButton = createSecondaryButton("Clear");
-        clearButton.addActionListener(e -> clearForm());
-        panel.add(clearButton);
-
-        JButton refreshButton = createSecondaryButton("Refresh");
-        refreshButton.addActionListener(e -> refreshData());
-        panel.add(refreshButton);
-
-        return panel;
+    private JTextField field() {
+        JTextField f = new JTextField();
+        f.setPreferredSize(new Dimension(180, 26));
+        return f;
     }
 
-    /**
-     * Button styling helpers to give an "admin dashboard" look
-     */
-    private JButton createPrimaryButton(String text) {
-        JButton button = new JButton(text);
-        styleButton(button, new Color(33, 150, 243), Color.WHITE);
-        return button;
+    private void addField(JPanel p, GridBagConstraints g, int x, int y, String label, JTextField field) {
+        g.gridx = x;
+        g.gridy = y;
+        g.weightx = 0;
+        p.add(new JLabel(label), g);
+
+        g.gridx = x + 1;
+        g.weightx = 1;
+        p.add(field, g);
     }
 
-    private JButton createSecondaryButton(String text) {
-        JButton button = new JButton(text);
-        styleButton(button, new Color(236, 239, 241), new Color(55, 71, 79));
-        return button;
-    }
-
-    private JButton createDangerButton(String text) {
-        JButton button = new JButton(text);
-        styleButton(button, new Color(229, 57, 53), Color.WHITE);
-        return button;
-    }
-
-    private void styleButton(JButton button, Color background, Color foreground) {
-        button.setBackground(background);
-        button.setForeground(foreground);
-        button.setFocusPainted(false);
-        button.setBorder(BorderFactory.createEmptyBorder(6, 14, 6, 14));
-        button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        button.setFont(button.getFont().deriveFont(Font.BOLD, 12f));
-    }
-
+    // ---------- CRUD ----------
     private void addPatient() {
-        try {
-            Patient patient = createPatientFromForm();
-            if (patient != null) {
-                controller.addPatient(patient);
-                refreshData();
-                clearForm();
-                JOptionPane.showMessageDialog(this, "Patient added successfully!");
-            }
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Error adding patient: " + e.getMessage(), 
-                                        "Error", JOptionPane.ERROR_MESSAGE);
-        }
+        controller.addPatient(createPatient());
+        refreshData();
+        clearForm();
     }
 
     private void updatePatient() {
-        int selectedRow = table.getSelectedRow();
-        if (selectedRow < 0) {
-            JOptionPane.showMessageDialog(this, "Please select a patient to update.");
-            return;
-        }
-
-        try {
-            String patientID = (String) tableModel.getValueAt(selectedRow, 0);
-            Patient patient = createPatientFromForm();
-            if (patient != null) {
-                controller.deletePatient(patientID);
-                controller.addPatient(patient);
-                refreshData();
-                clearForm();
-                JOptionPane.showMessageDialog(this, "Patient updated successfully!");
-            }
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Error updating patient: " + e.getMessage(), 
-                                        "Error", JOptionPane.ERROR_MESSAGE);
+        int row = table.getSelectedRow();
+        if (row >= 0) {
+            controller.deletePatient((String) tableModel.getValueAt(row, 0));
+            controller.addPatient(createPatient());
+            refreshData();
         }
     }
 
     private void deletePatient() {
-        int selectedRow = table.getSelectedRow();
-        if (selectedRow < 0) {
-            JOptionPane.showMessageDialog(this, "Please select a patient to delete.");
-            return;
-        }
-
-        int confirm = JOptionPane.showConfirmDialog(this, 
-            "Are you sure you want to delete this patient?", 
-            "Confirm Delete", JOptionPane.YES_NO_OPTION);
-        
-        if (confirm == JOptionPane.YES_OPTION) {
-            String patientID = (String) tableModel.getValueAt(selectedRow, 0);
-            controller.deletePatient(patientID);
+        int row = table.getSelectedRow();
+        if (row >= 0) {
+            controller.deletePatient((String) tableModel.getValueAt(row, 0));
             refreshData();
             clearForm();
-            JOptionPane.showMessageDialog(this, "Patient deleted successfully!");
         }
     }
 
-    private Patient createPatientFromForm() {
-        if (patientIDField.getText().trim().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Patient ID is required.");
-            return null;
-        }
-
+    private Patient createPatient() {
         return new Patient(
-            patientIDField.getText().trim(),
-            firstNameField.getText().trim(),
-            lastNameField.getText().trim(),
-            dobField.getText().trim(),
-            genderField.getText().trim(),
-            nhsNumberField.getText().trim(),
-            emailField.getText().trim(),
-            phoneField.getText().trim(),
-            addressField.getText().trim(),
-            postcodeField.getText().trim(),
-            emergencyContactNameField.getText().trim(),
-            emergencyContactPhoneField.getText().trim(),
-            registrationDateField.getText().trim(),
-            gpSurgeryField.getText().trim()
+                patientIDField.getText(),
+                firstNameField.getText(),
+                lastNameField.getText(),
+                dobField.getText(),
+                genderField.getText(),
+                nhsNumberField.getText(),
+                emailField.getText(),
+                phoneField.getText(),
+                addressField.getText(),
+                postcodeField.getText(),
+                emergencyContactNameField.getText(),
+                emergencyContactPhoneField.getText(),
+                registrationDateField.getText(),
+                gpSurgeryField.getText()
         );
     }
 
     private void loadSelectedPatient() {
-        int selectedRow = table.getSelectedRow();
-        if (selectedRow >= 0) {
-            patientIDField.setText((String) tableModel.getValueAt(selectedRow, 0));
-            firstNameField.setText((String) tableModel.getValueAt(selectedRow, 1));
-            lastNameField.setText((String) tableModel.getValueAt(selectedRow, 2));
-            dobField.setText((String) tableModel.getValueAt(selectedRow, 3));
-            genderField.setText((String) tableModel.getValueAt(selectedRow, 4));
-            nhsNumberField.setText((String) tableModel.getValueAt(selectedRow, 5));
-            emailField.setText((String) tableModel.getValueAt(selectedRow, 6));
-            phoneField.setText((String) tableModel.getValueAt(selectedRow, 7));
-            addressField.setText((String) tableModel.getValueAt(selectedRow, 8));
-            postcodeField.setText((String) tableModel.getValueAt(selectedRow, 9));
-            emergencyContactNameField.setText((String) tableModel.getValueAt(selectedRow, 10));
-            emergencyContactPhoneField.setText((String) tableModel.getValueAt(selectedRow, 11));
-            registrationDateField.setText((String) tableModel.getValueAt(selectedRow, 12));
-            gpSurgeryField.setText((String) tableModel.getValueAt(selectedRow, 13));
-        }
+        int r = table.getSelectedRow();
+        if (r < 0) return;
+
+        patientIDField.setText(tableModel.getValueAt(r, 0).toString());
+        firstNameField.setText(tableModel.getValueAt(r, 1).toString());
+        lastNameField.setText(tableModel.getValueAt(r, 2).toString());
+        dobField.setText(tableModel.getValueAt(r, 3).toString());
+        genderField.setText(tableModel.getValueAt(r, 4).toString());
+        nhsNumberField.setText(tableModel.getValueAt(r, 5).toString());
+        emailField.setText(tableModel.getValueAt(r, 6).toString());
+        phoneField.setText(tableModel.getValueAt(r, 7).toString());
+        addressField.setText(tableModel.getValueAt(r, 8).toString());
+        postcodeField.setText(tableModel.getValueAt(r, 9).toString());
+        emergencyContactNameField.setText(tableModel.getValueAt(r,10).toString());
+        emergencyContactPhoneField.setText(tableModel.getValueAt(r,11).toString());
+        registrationDateField.setText(tableModel.getValueAt(r,12).toString());
+        gpSurgeryField.setText(tableModel.getValueAt(r,13).toString());
     }
 
     private void clearForm() {
-        patientIDField.setText("");
-        firstNameField.setText("");
-        lastNameField.setText("");
-        dobField.setText("");
-        genderField.setText("");
-        nhsNumberField.setText("");
-        emailField.setText("");
-        phoneField.setText("");
-        addressField.setText("");
-        postcodeField.setText("");
-        emergencyContactNameField.setText("");
-        emergencyContactPhoneField.setText("");
-        registrationDateField.setText("");
-        gpSurgeryField.setText("");
+        for (Component c : ((JPanel)((JSplitPane)getComponent(1)).getBottomComponent()).getComponents()) {
+            if (c instanceof JTextField) ((JTextField)c).setText("");
+        }
     }
 
     public void refreshData() {
         tableModel.setRowCount(0);
-        List<Patient> patients = controller.getAllPatients();
-        for (Patient patient : patients) {
+        List<Patient> list = controller.getAllPatients();
+        for (Patient p : list) {
             tableModel.addRow(new Object[]{
-                patient.getPatientID(),
-                patient.getFirstName(),
-                patient.getLastName(),
-                patient.getDateOfBirth(),
-                patient.getGender(),
-                patient.getNhsNumber(),
-                patient.getEmail(),
-                patient.getPhone(),
-                patient.getAddress(),
-                patient.getPostcode(),
-                patient.getEmergencyContactName(),
-                patient.getEmergencyContactPhone(),
-                patient.getRegistrationDate(),
-                patient.getGpSurgery()
+                    p.getPatientID(), p.getFirstName(), p.getLastName(),
+                    p.getDateOfBirth(), p.getGender(), p.getNhsNumber(),
+                    p.getEmail(), p.getPhone(), p.getAddress(), p.getPostcode(),
+                    p.getEmergencyContactName(), p.getEmergencyContactPhone(),
+                    p.getRegistrationDate(), p.getGpSurgery()
             });
         }
     }
+
+    private void setColumnWidths() {
+        int[] w = {90,100,100,90,70,120,150,110,200,90,140,120,110,140};
+        for (int i = 0; i < w.length; i++) {
+            table.getColumnModel().getColumn(i).setPreferredWidth(w[i]);
+        }
+    }
 }
-
-
-
